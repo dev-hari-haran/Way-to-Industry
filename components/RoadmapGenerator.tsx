@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, Loader2, Sparkles, ChevronRight, Check, Flag,
   Layout, Server, Layers, Terminal, Shield, Cpu, Brain, Smartphone, Link, Star,
-  Lock, Trophy, User, LogIn, ArrowRight, Database, Code, Globe, Box, Hash, Feather, Cloud
+  Lock, Trophy, User, LogIn, ArrowRight, Database, Code, Globe, Box, Hash, Feather, Cloud,
+  X, ExternalLink, PlayCircle, BookOpen, MessageSquare, ChevronDown
 } from 'lucide-react';
-import { generateCareerRoadmap } from '../services/geminiService';
 
 interface RoadmapGeneratorProps {
   onBack: () => void;
@@ -123,13 +123,12 @@ const ROLES = [
   { id: 'C#', label: 'C#', icon: Hash, skills: ['Syntax & Types', 'OOP', 'LINQ', 'Async/Await', 'Generics', 'Delegates & Events', 'Exception Handling', '.NET Core Basics'] },
 ];
 
-const QUOTES = [
-  "Every expert was once a beginner.",
-  "Consistency is the key to mastery.",
-  "Your skills are your best asset.",
-  "Don't watch the clock; do what it does. Keep going.",
-  "Learning never exhausts the mind."
-];
+const FIXED_QUOTE = "Consistency is the key to mastery.";
+
+// Helper to generate description text
+const getSkillDescription = (skill: string) => {
+  return `${skill} is a fundamental concept or tool in this roadmap. It allows developers to build robust applications by managing data, state, or user interfaces efficiently. Mastering ${skill} involves understanding its core syntax, best practices, and how it integrates with other technologies in the ecosystem. It is widely used in the industry and is critical for building scalable solutions.`;
+};
 
 const RoadmapGenerator: React.FC<RoadmapGeneratorProps> = ({ onBack, initialRoleId }) => {
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -144,7 +143,7 @@ const RoadmapGenerator: React.FC<RoadmapGeneratorProps> = ({ onBack, initialRole
   // State for Step 3
   const [loading, setLoading] = useState(false);
   const [completedSkills, setCompletedSkills] = useState<Set<string>>(new Set());
-  const [randomQuote, setRandomQuote] = useState(QUOTES[0]);
+  const [selectedSkillForSidebar, setSelectedSkillForSidebar] = useState<string | null>(null);
 
   // Handle Initial Prop Effect
   useEffect(() => {
@@ -158,12 +157,6 @@ const RoadmapGenerator: React.FC<RoadmapGeneratorProps> = ({ onBack, initialRole
   }, [initialRoleId]);
 
   const getRoleData = (roleId: string | null) => ROLES.find(r => r.id === roleId);
-
-  useEffect(() => {
-    if (step === 3) {
-      setRandomQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
-    }
-  }, [step]);
 
   const handleNextStep = () => {
     if (step === 1 && selectedRole) {
@@ -233,17 +226,6 @@ const RoadmapGenerator: React.FC<RoadmapGeneratorProps> = ({ onBack, initialRole
     setCompletedSkills(next);
   };
 
-  const handleStartOver = () => {
-    if (initialRoleId) {
-        onBack(); // Go back to landing if started from there
-    } else {
-        setStep(1);
-        setSelectedRole(null);
-        setSkillRatings({});
-        setOtherContext('');
-    }
-  };
-
   const currentRoleData = getRoleData(selectedRole);
   const totalSkills = currentRoleData?.skills.length || 1;
   const progressPercentage = Math.round((completedSkills.size / totalSkills) * 100);
@@ -256,7 +238,7 @@ const RoadmapGenerator: React.FC<RoadmapGeneratorProps> = ({ onBack, initialRole
   const RATING_LABELS = ['Beginner', 'Elementary', 'Intermediate', 'Proficient', 'Advanced'];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col relative overflow-hidden">
       {/* Header */}
       <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center gap-4 sticky top-0 z-30 shadow-sm">
         <button onClick={step === 1 ? onBack : handleBackStep} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-600">
@@ -267,16 +249,28 @@ const RoadmapGenerator: React.FC<RoadmapGeneratorProps> = ({ onBack, initialRole
              {step === 3 ? `Roadmap: ${selectedRole}` : 'Create Your Roadmap'}
            </h1>
            <div className="flex items-center gap-2 text-xs font-medium text-slate-500 mt-0.5">
-             <span className={step >= 1 ? "text-emerald-600" : ""}>Select</span>
+             <button 
+               onClick={() => setStep(1)}
+               disabled={step === 1}
+               className={`transition-colors ${step >= 1 ? "text-emerald-600 hover:text-emerald-700" : "hover:text-slate-700"}`}
+             >
+               Home
+             </button>
              <ChevronRight className="w-3 h-3" />
-             <span className={step >= 2 ? "text-emerald-600" : ""}>Skills</span>
+             <button 
+               onClick={() => step > 2 ? setStep(2) : null}
+               disabled={step <= 2}
+               className={`transition-colors ${step >= 2 ? "text-emerald-600 hover:text-emerald-700" : ""} ${step > 2 ? "cursor-pointer" : "cursor-default"}`}
+             >
+               Skill
+             </button>
              <ChevronRight className="w-3 h-3" />
              <span className={step >= 3 ? "text-emerald-600" : ""}>Roadmap</span>
            </div>
         </div>
       </header>
 
-      <main className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-6 pb-24">
+      <main className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-6 pb-24 relative">
         
         {/* STEP 1: SELECT ROLE */}
         {step === 1 && (
@@ -328,12 +322,14 @@ const RoadmapGenerator: React.FC<RoadmapGeneratorProps> = ({ onBack, initialRole
         {/* STEP 2: ENTER SKILLS */}
         {step === 2 && currentRoleData && (
           <div className="max-w-3xl mx-auto animate-in fade-in slide-in-from-right-8 duration-500">
-             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 mb-8 text-center">
-                <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full mb-3">
-                  Target: {selectedRole}
-                </span>
+             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 mb-8 text-left">
+                <div className="flex items-center gap-3 mb-3">
+                    <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full">
+                    Target: {selectedRole}
+                    </span>
+                </div>
                 <h2 className="text-3xl font-bold text-slate-900">Assess Your Knowledge</h2>
-                <p className="text-slate-600 mt-2 max-w-lg mx-auto">
+                <p className="text-slate-600 mt-2 max-w-lg">
                   Rate yourself on each topic to let us personalize your roadmap.
                 </p>
              </div>
@@ -366,7 +362,10 @@ const RoadmapGenerator: React.FC<RoadmapGeneratorProps> = ({ onBack, initialRole
                 })}
              </div>
 
-             <div className="mt-8 flex justify-end pb-8">
+             <div className="mt-8 flex flex-col md:flex-row items-center justify-between gap-4 pb-8">
+                 <div className="hidden md:block text-slate-400 italic font-medium text-sm">
+                    "Every expert was once a beginner."
+                 </div>
                  <button
                    onClick={handleSubmit}
                    disabled={loading}
@@ -392,68 +391,71 @@ const RoadmapGenerator: React.FC<RoadmapGeneratorProps> = ({ onBack, initialRole
         {step === 3 && currentRoleData && (
           <div className="grid lg:grid-cols-12 gap-8 animate-in fade-in duration-500">
             
-            {/* Left Sidebar: Progress & Actions */}
-            <div className="lg:col-span-4 space-y-6">
-              
-              {/* Progress Card */}
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col items-center text-center sticky top-24">
-                <h3 className="text-lg font-bold text-slate-800 mb-6">Readiness Score</h3>
+            {/* Left Sidebar: Progress & Actions & Motivation */}
+            <div className="lg:col-span-4">
+              <div className="sticky top-24 space-y-6">
                 
-                <div className="relative w-40 h-40 mb-6">
-                  {/* SVG Circle Progress */}
-                  <svg className="w-full h-full transform -rotate-90">
-                    <circle
-                      cx="50%" cy="50%" r={radius}
-                      stroke="currentColor" strokeWidth="8" fill="transparent"
-                      className="text-slate-100"
-                    />
-                    <circle
-                      cx="50%" cy="50%" r={radius}
-                      stroke="currentColor" strokeWidth="8" fill="transparent"
-                      strokeDasharray={circumference}
-                      strokeDashoffset={strokeDashoffset}
-                      className="text-emerald-500 transition-all duration-1000 ease-out"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center flex-col">
-                    <span className="text-4xl font-bold text-emerald-600">{progressPercentage}%</span>
+                {/* Progress Card */}
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col items-center text-center">
+                  <h3 className="text-lg font-bold text-slate-800 mb-6">Readiness Score</h3>
+                  
+                  <div className="relative w-40 h-40 mb-6">
+                    {/* SVG Circle Progress */}
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle
+                        cx="50%" cy="50%" r={radius}
+                        stroke="currentColor" strokeWidth="8" fill="transparent"
+                        className="text-slate-100"
+                      />
+                      <circle
+                        cx="50%" cy="50%" r={radius}
+                        stroke="currentColor" strokeWidth="8" fill="transparent"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={strokeDashoffset}
+                        className="text-emerald-500 transition-all duration-1000 ease-out"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center flex-col">
+                      <span className="text-4xl font-bold text-emerald-600">{progressPercentage}%</span>
+                    </div>
+                  </div>
+                  
+                  <p className="text-sm text-slate-500 mb-6">
+                    {progressPercentage < 30 ? "Good start! Keep learning." : 
+                     progressPercentage < 70 ? "You're making great progress!" : 
+                     "You are almost industry ready!"}
+                  </p>
+
+                  {/* Save Progress Card */}
+                  <div className="w-full bg-slate-50 rounded-xl p-4 border border-slate-100">
+                    <p className="text-sm font-medium text-slate-700 mb-3">Save your progress?</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button className="px-3 py-2 text-xs font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1">
+                        <LogIn className="w-3 h-3" /> Login
+                      </button>
+                      <button className="px-3 py-2 text-xs font-bold text-emerald-700 bg-emerald-100 rounded-lg hover:bg-emerald-200 transition-colors flex items-center justify-center gap-1">
+                        <User className="w-3 h-3" /> Sign Up
+                      </button>
+                    </div>
                   </div>
                 </div>
-                
-                <p className="text-sm text-slate-500 mb-6">
-                  {progressPercentage < 30 ? "Good start! Keep learning." : 
-                   progressPercentage < 70 ? "You're making great progress!" : 
-                   "You are almost industry ready!"}
-                </p>
 
-                {/* Save Progress Card */}
-                <div className="w-full bg-slate-50 rounded-xl p-4 border border-slate-100">
-                  <p className="text-sm font-medium text-slate-700 mb-3">Save your progress?</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button className="px-3 py-2 text-xs font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1">
-                      <LogIn className="w-3 h-3" /> Login
-                    </button>
-                    <button className="px-3 py-2 text-xs font-bold text-emerald-700 bg-emerald-100 rounded-lg hover:bg-emerald-200 transition-colors flex items-center justify-center gap-1">
-                      <User className="w-3 h-3" /> Sign Up
-                    </button>
-                  </div>
+                {/* Motivation Card */}
+                <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-md">
+                  <Sparkles className="w-6 h-6 mb-3 opacity-80" />
+                  <p className="font-medium text-lg italic leading-relaxed">
+                    "{FIXED_QUOTE}"
+                  </p>
                 </div>
-              </div>
 
-              {/* Motivation Card */}
-              <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-md">
-                <Sparkles className="w-6 h-6 mb-3 opacity-80" />
-                <p className="font-medium text-lg italic leading-relaxed">
-                  "{randomQuote}"
-                </p>
               </div>
-
             </div>
 
             {/* Main Content: Vertical Roadmap */}
             <div className="lg:col-span-8">
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+                
                 <div className="flex items-center justify-between mb-8">
                   <div>
                     <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -468,39 +470,48 @@ const RoadmapGenerator: React.FC<RoadmapGeneratorProps> = ({ onBack, initialRole
                 </div>
 
                 <div className="relative pl-6 md:pl-8 space-y-8">
-                  {/* Vertical Line */}
-                  <div className="absolute left-[35px] md:left-[43px] top-4 bottom-4 w-0.5 bg-slate-100" />
-
+                  
                   {currentRoleData.skills.map((skill, index) => {
                     const isCompleted = completedSkills.has(skill);
                     const isNext = !isCompleted && (index === 0 || completedSkills.has(currentRoleData.skills[index - 1]));
                     
                     // Insert Project Milestone every 4 skills
                     const showProject = (index + 1) % 4 === 0;
+                    const isLastSkill = index === currentRoleData.skills.length - 1;
 
                     return (
                       <React.Fragment key={skill}>
                         {/* Skill Node */}
                         <div className="relative pl-10 md:pl-12 group">
                           
-                          {/* Node Dot/Check */}
+                          {/* Connection Line */}
+                          {(!isLastSkill || showProject) && (
+                            <div className="absolute left-[15px] top-5 h-[calc(100%+4rem)] w-0.5 bg-slate-100 -z-10" />
+                          )}
+
+                          {/* Node Dot/Check - Acts as COMPLETE button */}
                           <button 
-                            onClick={() => toggleSkillCompletion(skill)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleSkillCompletion(skill);
+                            }}
                             className={`
-                              absolute left-0 top-1 w-8 h-8 rounded-full border-2 flex items-center justify-center z-10 transition-all duration-300 bg-white
+                              absolute left-0 top-1 w-8 h-8 rounded-full border-2 flex items-center justify-center z-10 transition-all duration-300 bg-white cursor-pointer hover:scale-110 hover:shadow-sm
                               ${isCompleted 
                                 ? 'border-emerald-500 bg-emerald-500 text-white' 
                                 : isNext ? 'border-emerald-400 ring-4 ring-emerald-50 text-emerald-400' : 'border-slate-200 text-slate-300'}
                             `}
+                            title="Click to complete"
                           >
                             {isCompleted ? <Check className="w-4 h-4" /> : <div className="w-2 h-2 rounded-full bg-current" />}
                           </button>
 
-                          {/* Content */}
+                          {/* Content - Acts as INFO button */}
                           <div 
-                            onClick={() => toggleSkillCompletion(skill)}
+                            onClick={() => setSelectedSkillForSidebar(skill)}
                             className={`
-                              p-4 rounded-xl border transition-all cursor-pointer hover:shadow-md
+                              p-4 rounded-xl border transition-all cursor-pointer hover:border-emerald-400 hover:shadow-md
+                              ${selectedSkillForSidebar === skill ? 'ring-2 ring-emerald-500 ring-offset-2' : ''}
                               ${isCompleted 
                                 ? 'bg-emerald-50/30 border-emerald-100 opacity-75' 
                                 : isNext ? 'bg-white border-emerald-500 shadow-md scale-[1.01]' : 'bg-white border-slate-100 text-slate-500'}
@@ -518,6 +529,12 @@ const RoadmapGenerator: React.FC<RoadmapGeneratorProps> = ({ onBack, initialRole
                         {/* Project Milestone Node */}
                         {showProject && (
                           <div className="relative pl-10 md:pl-12 py-4">
+                            
+                            {/* Connection Line */}
+                            {!isLastSkill && (
+                              <div className="absolute left-[17px] top-8 h-[calc(100%+4rem)] w-0.5 bg-slate-100 -z-10" />
+                            )}
+
                             <div className="absolute left-[2px] top-4 w-8 h-8 rounded-full bg-amber-100 border-2 border-amber-300 flex items-center justify-center z-10">
                               <Trophy className="w-4 h-4 text-amber-600" />
                             </div>
@@ -534,12 +551,22 @@ const RoadmapGenerator: React.FC<RoadmapGeneratorProps> = ({ onBack, initialRole
                       </React.Fragment>
                     );
                   })}
+                  
+                  {/* Distinct End Bar */}
+                  <div className="relative pl-10 md:pl-12 pt-4">
+                      <div className="bg-slate-900 text-white py-4 px-6 rounded-full shadow-xl text-center font-semibold tracking-wide flex items-center justify-center gap-3 w-fit">
+                          <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                          Practice turns effort into mastery.
+                          <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                      </div>
+                  </div>
+
                 </div>
               </div>
 
-              {/* Related Roles */}
+              {/* Related Roles / Coding Interview */}
               <div className="mt-8">
-                <h3 className="text-xl font-bold text-slate-900 mb-4">Related Career Paths</h3>
+                <h3 className="text-xl font-bold text-slate-900 mb-4">Explore Paths</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {ROLES.filter(r => r.id !== selectedRole).slice(0, 3).map(role => (
                      <div key={role.id} onClick={() => handleRoleDoubleClick(role.id)} className="p-4 bg-white border border-slate-200 rounded-xl hover:border-emerald-300 hover:shadow-md transition-all cursor-pointer group">
@@ -560,6 +587,142 @@ const RoadmapGenerator: React.FC<RoadmapGeneratorProps> = ({ onBack, initialRole
         )}
 
       </main>
+
+      {/* SKILL DETAIL SIDEBAR OVERLAY */}
+      {selectedSkillForSidebar && (
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/20 z-[40]"
+            onClick={() => setSelectedSkillForSidebar(null)}
+          />
+          
+          {/* Sidebar Drawer */}
+          <div className="fixed right-0 top-0 bottom-0 w-full max-w-[450px] bg-[#f0f2f5] z-[50] shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+            
+            {/* Top Header Bar */}
+            <div className="flex items-center justify-between px-6 py-4 bg-transparent">
+               <div className="flex items-center gap-2">
+                 <button className="flex items-center gap-1.5 px-3 py-1.5 bg-black text-white rounded-md text-xs font-medium hover:bg-slate-800 transition-colors">
+                   <Globe className="w-3.5 h-3.5" />
+                   Resources
+                 </button>
+                 <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-md text-xs font-medium hover:bg-slate-50 transition-colors">
+                   <Sparkles className="w-3.5 h-3.5" />
+                   AI Tutor
+                 </button>
+               </div>
+               
+               <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => toggleSkillCompletion(selectedSkillForSidebar)}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-slate-200/60 rounded-full text-xs font-medium text-slate-600 hover:bg-slate-200"
+                  >
+                    <div className={`w-2 h-2 rounded-full ${completedSkills.has(selectedSkillForSidebar) ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                    {completedSkills.has(selectedSkillForSidebar) ? 'Completed' : 'Pending'}
+                    <ChevronDown className="w-3 h-3" />
+                  </button>
+                  <button 
+                    onClick={() => setSelectedSkillForSidebar(null)}
+                    className="p-1.5 hover:bg-slate-200 rounded-full text-slate-500 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+               </div>
+            </div>
+
+            {/* Main Content */}
+            <div className="flex-1 overflow-y-auto px-8 py-6">
+              
+              <h2 className="text-4xl font-black text-slate-900 mb-6 tracking-tight">
+                {selectedSkillForSidebar}
+              </h2>
+
+              <p className="text-slate-600 text-lg leading-relaxed mb-8">
+                {getSkillDescription(selectedSkillForSidebar)}
+              </p>
+
+              {/* Free Resources Section */}
+              <div className="mb-8">
+                 <div className="flex items-center gap-2 mb-4">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                      <Star className="w-3 h-3 fill-emerald-700" />
+                      Free Resources
+                    </span>
+                    <div className="h-px bg-slate-200 flex-1"></div>
+                 </div>
+
+                 <div className="space-y-2">
+                    <a href="#" className="flex items-center gap-3 p-2 hover:bg-white rounded-lg transition-colors group">
+                       <span className="px-2 py-1 rounded bg-slate-600 text-white text-[10px] font-bold uppercase tracking-wider">Official</span>
+                       <span className="text-slate-700 font-medium underline decoration-slate-300 underline-offset-4 group-hover:decoration-emerald-400">
+                         {selectedSkillForSidebar} Website
+                       </span>
+                       <ExternalLink className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </a>
+                    
+                    <a href="#" className="flex items-center gap-3 p-2 hover:bg-white rounded-lg transition-colors group">
+                       <span className="px-2 py-1 rounded bg-slate-600 text-white text-[10px] font-bold uppercase tracking-wider">Official</span>
+                       <span className="text-slate-700 font-medium underline decoration-slate-300 underline-offset-4 group-hover:decoration-emerald-400">
+                         {selectedSkillForSidebar} Documentation
+                       </span>
+                       <BookOpen className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </a>
+
+                    <a href="#" className="flex items-center gap-3 p-2 hover:bg-white rounded-lg transition-colors group">
+                       <span className="px-2 py-1 rounded bg-purple-600 text-white text-[10px] font-bold uppercase tracking-wider">Video</span>
+                       <span className="text-slate-700 font-medium underline decoration-slate-300 underline-offset-4 group-hover:decoration-emerald-400">
+                         {selectedSkillForSidebar} in 100 Seconds
+                       </span>
+                       <PlayCircle className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </a>
+
+                    <a href="#" className="flex items-center gap-3 p-2 hover:bg-white rounded-lg transition-colors group">
+                       <span className="px-2 py-1 rounded bg-orange-500 text-white text-[10px] font-bold uppercase tracking-wider">Feed</span>
+                       <span className="text-slate-700 font-medium underline decoration-slate-300 underline-offset-4 group-hover:decoration-emerald-400">
+                         Explore top posts about {selectedSkillForSidebar}
+                       </span>
+                       <MessageSquare className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </a>
+                 </div>
+              </div>
+
+              {/* Status Section */}
+              <div className="bg-white p-6 rounded-2xl border border-slate-200">
+                  <p className="text-slate-600 mb-4 text-sm leading-relaxed">
+                    At this point you should have the expertise of an intermediate level developer. Keep practicing and sharpening your skills.
+                  </p>
+                  
+                  <div className="flex gap-2">
+                     <button className="flex-1 py-3 px-4 bg-slate-100 text-slate-700 font-medium rounded-xl hover:bg-slate-200 transition-colors text-sm">
+                       Advanced Project Ideas
+                     </button>
+                     <button className="flex items-center justify-center gap-2 py-3 px-6 bg-slate-800 text-white font-medium rounded-xl hover:bg-slate-900 transition-colors text-sm">
+                       <Sparkles className="w-4 h-4 text-emerald-400" />
+                       AI Tutor
+                     </button>
+                  </div>
+              </div>
+
+            </div>
+            
+            {/* Ask AI Sticky Input */}
+            <div className="p-4 border-t border-slate-200 bg-white">
+               <div className="relative">
+                 <input 
+                   type="text" 
+                   placeholder="Have a question? Ask AI Tutor..." 
+                   className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+                 />
+                 <button className="absolute right-3 top-3 text-slate-400 hover:text-emerald-600">
+                   <Sparkles className="w-5 h-5" />
+                 </button>
+               </div>
+            </div>
+
+          </div>
+        </>
+      )}
     </div>
   );
 };

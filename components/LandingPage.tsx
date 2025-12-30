@@ -2,14 +2,15 @@ import React from 'react';
 import { 
   ArrowRight, BookOpen, Compass, Target, CheckCircle, 
   BarChart, Cpu, Layout, Server, Layers, Terminal, 
-  Shield, Brain, Link, Smartphone, Database, Code, Globe, Box, Hash
+  Shield, Brain, Link, Smartphone, Database, Code, Globe, Box, Hash, LogIn, UserPlus
 } from 'lucide-react';
 
 interface LandingPageProps {
+  onLogin: () => void;
   onGetStarted: (id?: string) => void;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onGetStarted }) => {
   const skills = [
     { id: 'SQL', label: 'SQL', icon: Database },
     { id: 'React', label: 'React', icon: Code },
@@ -44,12 +45,21 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
               </div>
               <span className="text-xl font-bold text-slate-900">Budding Blooms</span>
             </div>
-            <button 
-              onClick={() => onGetStarted()}
-              className="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-full hover:bg-emerald-700 transition-colors"
-            >
-              Get Started
-            </button>
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={onLogin} 
+                className="text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors"
+              >
+                Log in
+              </button>
+              <button 
+                onClick={onLogin} 
+                className="px-4 py-2 text-sm font-bold text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2"
+              >
+                <UserPlus className="w-4 h-4" />
+                Sign Up
+              </button>
+            </div>
           </div>
         </div>
       </nav>
@@ -78,8 +88,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
               Get Started
               <ArrowRight className="w-5 h-5" />
             </button>
-            <button className="px-8 py-4 text-lg font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all">
-              Explore Roles
+            <button 
+              onClick={onLogin}
+              className="px-8 py-4 text-lg font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all"
+            >
+              Dashboard
             </button>
           </div>
           
@@ -111,7 +124,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
             />
             <FeatureCard 
               icon={<BookOpen className="w-8 h-8 text-emerald-600" />}
-              title="AI-Guided Career Support"
+              title="AI-Powered Coding Interview"
               description="Our AI mentor suggests resources, projects, and certifications to close your gaps fast."
             />
           </div>
@@ -210,7 +223,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
             </div>
             <span className="text-xl font-bold text-white">Budding Blooms</span>
           </div>
-          <p className="text-sm">© 2024 Budding Blooms. Built for Hackathon Success.</p>
+          <p className="text-sm">© 2025-26 Budding Blooms. Built with Kindness & Care.</p>
         </div>
       </footer>
     </div>
