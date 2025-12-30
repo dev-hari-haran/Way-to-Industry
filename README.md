@@ -9,7 +9,7 @@ A role-based learning and guidance platform that bridges the gap between **colle
 ## 🚀 Live Preview
 
 * 🌐 **Web App (Live Demo):**
-  👉 [https://your-live-preview-link-here](https://your-live-preview-link-here)
+  👉 https://6954115c52c4f414ee892dde--willowy-gumdrop-49af14.netlify.app/
 
 * 🎥 **Demo Video (Optional):**
   👉 [https://your-demo-video-link-here](https://your-demo-video-link-here)
